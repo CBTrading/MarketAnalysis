@@ -47,8 +47,8 @@ def parse_args():
     return args._get_args(), dict(args._get_kwargs())
 
 def request_data(*args, **kwargs):
-    from pyCBT.data.providers.oanda import account
-    from pyCBT.data.providers.oanda import historical
+    from pyCBT.providers.oanda import account
+    from pyCBT.providers.oanda import historical
 
     client = account.Client()
     candles = historical.Candles(
@@ -65,7 +65,7 @@ def request_data(*args, **kwargs):
 def dump_data(*args, **kwargs):
     import os, sys, re, string
     import pandas as pd
-    from pyCBT.tools.files import exist
+    from pyCBT.common.files import exist
     from openpyxl import load_workbook
 
     dataframe, = args
