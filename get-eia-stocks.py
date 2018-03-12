@@ -72,18 +72,18 @@ def request_data(*args, **kwargs):
     from selenium.webdriver.common.by import By
     from selenium.webdriver.support.ui import WebDriverWait
     from selenium.webdriver.support import expected_conditions as EC
-    from pyCBT.tools.timezone import timezone_shift
+    from pyCBT.common.timezone import parse_tz, timezone_shift
 
     locale.setlocale(locale.LC_TIME, "en_US")
-    from_date = parse(kwargs.get("from_date"))
-    to_date = parse(kwargs.get("to_date"))
+    from_date = parse_tz(kwargs.get("from_date"), in_tz=kwargs.get("timezone"))
+    to_date = parse_tz(kwargs.get("to_date"), in_tz=kwargs.get("timezone"))
 
     browser = webdriver.Chrome()
     browser.get("https://www.investing.com/economic-calendar/eia-crude-oil-inventories-75")
     inv_table = browser.find_element(By.ID, "eventHistoryTable75")
     last_record_date = inv_table.find_element_by_css_selector("tbody tr:last-child td")
     wait = WebDriverWait(browser, 10)
-    while parse(last_record_date.text) > from_date:
+    while parse_tz(last_record_date.text, in_tz="America/New_York") > from_date:
         show_more = wait.until(EC.element_to_be_clickable((By.ID, "showMoreHistory75")))
         show_more.click()
         inv_table = wait.until(inventory_table_has_changed_from((By.ID, "eventHistoryTable75"), inv_table))
@@ -99,7 +99,7 @@ def request_data(*args, **kwargs):
         ),
         table["Datetime"]
     )
-    mask = [not (from_date <= parse(release_date) <= to_date) for release_date in table["Release Date"]]
+    mask = [not (from_date <= parse_tz(release_date, in_tz="America/New_York") <= to_date) for release_date in table["Release Date"]]
     table.drop(table.index[mask], axis="index", inplace=True)
     table.drop(["Release Date", "Time", "Unnamed: 5"], axis="columns", inplace=True)
     table.set_index("Datetime", inplace=True)
@@ -110,7 +110,7 @@ def request_data(*args, **kwargs):
 def dump_data(*args, **kwargs):
     import os, sys, re, string
     import pandas as pd
-    from pyCBT.tools.files import exist
+    from pyCBT.common.files import exist
     from openpyxl import load_workbook
 
     dataframe, = args
