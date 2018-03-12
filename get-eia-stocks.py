@@ -125,7 +125,7 @@ def dump_data(*args, **kwargs):
                 if sheetname in book.sheetnames:
                     match = re.match("(\w+)_(\d+)", sheetname)
                     if not match: sheetname += "_{0:03d}"
-                    else: sheetname = string.join("_", [match.groups()[0], "{0:03d}"])
+                    else: sheetname = string.join([match.groups()[0], "{0:03d}"], "_")
                 i = 1
                 while sheetname.format(i) in book.sheetnames: i += 1
                 sheetname = sheetname.format(i)
