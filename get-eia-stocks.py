@@ -3,6 +3,7 @@ from dateutil.parser import parse
 from datetime import datetime
 import pandas as pd
 
+
 class inventory_table_has_changed_from(object):
     """An expectation for checking that the inventory table has changed.
 
@@ -65,6 +66,7 @@ def parse_args():
 
     return args._get_args(), dict(args._get_kwargs())
 
+# TODO: implement parse "better" and "worse" than expected
 def request_data(*args, **kwargs):
     import locale
     from selenium import webdriver
@@ -85,7 +87,7 @@ def request_data(*args, **kwargs):
     wait = WebDriverWait(browser, 10)
     while parse_tz(last_record_date.text, in_tz="America/New_York") > from_date:
         show_more = wait.until(EC.element_to_be_clickable((By.ID, "showMoreHistory75")))
-        show_more.click()
+        browser.execute_script("arguments[0].click();", show_more)
         inv_table = wait.until(inventory_table_has_changed_from((By.ID, "eventHistoryTable75"), inv_table))
         last_record_date = inv_table.find_element_by_css_selector("tbody tr:last-child td")
 
@@ -103,6 +105,7 @@ def request_data(*args, **kwargs):
     table.drop(table.index[mask], axis="index", inplace=True)
     table.drop(["Release Date", "Time", "Unnamed: 5"], axis="columns", inplace=True)
     table.set_index("Datetime", inplace=True)
+    # TODO: parse units (M) of barrels
 
     locale.resetlocale(locale.LC_TIME)
     return table
