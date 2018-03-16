@@ -2,7 +2,15 @@
 from dateutil.parser import parse
 from datetime import datetime
 import pandas as pd
+import re
 
+
+def remove_pattern(string, pattern):
+    match = re.findall(pattern, string)
+    new = string
+    while match:
+        new = new.replace(match.pop(), "")
+    return new
 
 class inventory_table_has_changed_from(object):
     """An expectation for checking that the inventory table has changed.
@@ -111,7 +119,7 @@ def request_data(*args, **kwargs):
     return table
 
 def dump_data(*args, **kwargs):
-    import os, sys, re, string
+    import os, sys, string
     import pandas as pd
     from pyCBT.common.files import exist
     from openpyxl import load_workbook
