@@ -95,7 +95,6 @@ def dump_data(*args, **kwargs):
             # TODO: if the file exist, ask the user
             if filename.split(".")[-1] != "csv": filename += ".csv"
             dataframe.reset_index().to_csv(filename, index=False, line_terminator=os.linesep)
-
     else:
         dataframe.reset_index().to_csv(sys.stdout, index=False, line_terminator=os.linesep)
 
