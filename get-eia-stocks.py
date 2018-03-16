@@ -5,6 +5,7 @@ import pandas as pd
 import re
 
 
+# TODO: move this function to common.timezone as part of the parser
 def remove_pattern(string, pattern):
     match = re.findall(pattern, string)
     new = string
@@ -115,7 +116,7 @@ def request_data(*args, **kwargs):
     table.drop(table.index[mask], axis="index", inplace=True)
     table.drop(["Release Date", "Time", "Unnamed: 5"], axis="columns", inplace=True)
     table.set_index("Datetime", inplace=True)
-    # TODO: parse units (M) of barrels
+    table = table.applymap(lambda cell: eval(cell.strip("M")) if type(cell) == str else cell)
 
     locale.resetlocale(locale.LC_TIME)
     return table
