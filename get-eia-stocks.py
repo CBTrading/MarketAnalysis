@@ -107,6 +107,8 @@ def request_data(*args, **kwargs):
 
     table = pd.read_html(u"<table>"+inv_table.get_attribute("innerHTML")+u"</table>")[0]
     table.insert(0, "Datetime", value=table["Release Date"]+" "+table["Time"])
+    better = map(lambda span: "better" in span.get_attribute("title").lower() if span.get_attribute("title").strip() else None, inv_table.find_elements_by_tag_name("span"))
+    table.insert(table.columns.size, "Better", value=better)
     table["Datetime"] = table["Datetime"].apply(remove_pattern, args=(r"\(\w+\)",))
     table["Datetime"] = table["Datetime"].apply(
         timezone_shift,
