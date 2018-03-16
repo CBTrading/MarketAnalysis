@@ -90,26 +90,28 @@ def request_data(*args, **kwargs):
 
     browser = webdriver.Chrome()
     browser.get("https://www.investing.com/economic-calendar/eia-crude-oil-inventories-75")
+
     inv_table = browser.find_element(By.ID, "eventHistoryTable75")
-    last_record_date = inv_table.find_element_by_css_selector("tbody tr:last-child td")
+    last_date_str = inv_table.find_element_by_css_selector("tbody tr:last-child td").text
+    last_record_date = parse_tz(remove_pattern(last_date_str, r"\(\w+\)"), in_tz="America/New_York")
+
     wait = WebDriverWait(browser, 10)
-    while parse_tz(last_record_date.text, in_tz="America/New_York") > from_date:
+    while last_record_date > from_date:
         show_more = wait.until(EC.element_to_be_clickable((By.ID, "showMoreHistory75")))
         browser.execute_script("arguments[0].click();", show_more)
+
         inv_table = wait.until(inventory_table_has_changed_from((By.ID, "eventHistoryTable75"), inv_table))
-        last_record_date = inv_table.find_element_by_css_selector("tbody tr:last-child td")
+        last_date_str = inv_table.find_element_by_css_selector("tbody tr:last-child td").text
+        last_record_date = parse_tz(remove_pattern(last_date_str, r"\(\w+\)"), in_tz="America/New_York")
 
     table = pd.read_html(u"<table>"+inv_table.get_attribute("innerHTML")+u"</table>")[0]
     table.insert(0, "Datetime", value=table["Release Date"]+" "+table["Time"])
-    table["Datetime"] = map(lambda dt: timezone_shift(
-            datetime_str=dt,
-            in_tz="America/New_York",
-            out_tz=kwargs.get("timezone"),
-            fmt=kwargs.get("datetime_format")
-        ),
-        table["Datetime"]
+    table["Datetime"] = table["Datetime"].apply(remove_pattern, args=(r"\(\w+\)",))
+    table["Datetime"] = table["Datetime"].apply(
+        timezone_shift,
+        args=("America/New_York", kwargs.get("timezone"), kwargs.get("datetime_format"))
     )
-    mask = [not (from_date <= parse_tz(release_date, in_tz="America/New_York") <= to_date) for release_date in table["Release Date"]]
+    mask = [not (from_date <= parse_tz(release_date, in_tz="America/New_York") <= to_date) for release_date in table["Datetime"]]
     table.drop(table.index[mask], axis="index", inplace=True)
     table.drop(["Release Date", "Time", "Unnamed: 5"], axis="columns", inplace=True)
     table.set_index("Datetime", inplace=True)
